@@ -130,6 +130,7 @@ export class UIManager {
             this._streamRenderTimer = null;
         }
         this._pendingContent = null;
+        this.markdownRenderer._mermaidCache.clear();
         this.renderLastMessageContent(content, false);
     }
 
