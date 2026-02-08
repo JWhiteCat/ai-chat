@@ -55,7 +55,7 @@ The frontend calls the LLM API directly. Users provide their own API Key.
 
 - API Key is stored in the browser's `localStorage` (per-browser)
 - Custom Base URL supported (for third-party proxies)
-- Default models: Claude Sonnet 4.5 / Haiku 4.5
+- Default models: Claude Opus 4.6 / Sonnet 4.5 / Haiku 4.5
 
 ### Proxy Mode
 
@@ -72,6 +72,7 @@ To enable:
     "api_key": "sk-ant-your-key-here",
     "base_url": "https://api.anthropic.com",
     "allowed_models": [
+        { "id": "claude-opus-4-6", "name": "Opus 4.6" },
         { "id": "claude-sonnet-4-5-20250929", "name": "Sonnet 4.5", "default": true },
         { "id": "claude-haiku-4-5-20251001", "name": "Haiku 4.5" }
     ]
@@ -136,6 +137,7 @@ location.reload()
 
 | Model ID | Name | Notes |
 |---|---|---|
+| `claude-opus-4-6` | Opus 4.6 | Most capable, highest quality |
 | `claude-sonnet-4-5-20250929` | Sonnet 4.5 | Balanced performance and cost (recommended) |
 | `claude-haiku-4-5-20251001` | Haiku 4.5 | Fast responses, lowest cost |
 

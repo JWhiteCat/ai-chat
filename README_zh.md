@@ -55,7 +55,7 @@ python web_server.py 3000   # 指定端口
 
 - API Key 存储在浏览器 `localStorage` 中，每个浏览器独立
 - 支持自定义 Base URL（用于第三方代理）
-- 默认可选模型：Claude Sonnet 4.5 / Haiku 4.5
+- 默认可选模型：Claude Opus 4.6 / Sonnet 4.5 / Haiku 4.5
 
 ### 代理模式
 
@@ -72,6 +72,7 @@ python web_server.py 3000   # 指定端口
     "api_key": "sk-ant-your-key-here",
     "base_url": "https://api.anthropic.com",
     "allowed_models": [
+        { "id": "claude-opus-4-6", "name": "Opus 4.6" },
         { "id": "claude-sonnet-4-5-20250929", "name": "Sonnet 4.5", "default": true },
         { "id": "claude-haiku-4-5-20251001", "name": "Haiku 4.5" }
     ]
@@ -136,6 +137,7 @@ location.reload()
 
 | Model ID | 名称 | 说明 |
 |---|---|---|
+| `claude-opus-4-6` | Opus 4.6 | 最强能力，最高质量 |
 | `claude-sonnet-4-5-20250929` | Sonnet 4.5 | 平衡性能和成本（推荐） |
 | `claude-haiku-4-5-20251001` | Haiku 4.5 | 快速响应，成本最低 |
 
