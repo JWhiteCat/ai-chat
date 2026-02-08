@@ -6,6 +6,8 @@
 
 ---
 
+[WebLLM Chat Demo Video](assets/ai-chat-demo.webm)
+
 ## 功能特性
 
 - **多模型支持** — 默认 Claude 模型，可通过自定义模型接入任何 OpenAI 兼容 API

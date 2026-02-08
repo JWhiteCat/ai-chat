@@ -6,6 +6,8 @@ A lightweight, multi-LLM web chat application. Defaults to Claude (Anthropic), b
 
 ---
 
+[WebLLM Chat Demo Video](assets/ai-chat-demo.webm)
+
 ## Features
 
 - **Multi-LLM Support** — Claude models by default; any OpenAI-compatible API via custom model config
