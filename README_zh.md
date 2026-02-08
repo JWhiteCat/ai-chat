@@ -8,6 +8,11 @@
 
 [WebLLM Chat Demo Video](https://github.com/user-attachments/assets/3d499658-4c7f-4743-81c2-c3e127f73edf)
 
+<p align="center">
+  <img src="assets/mobile.jpg" width="280" />
+  <img src="assets/mobile-settings.jpg" width="280" />
+</p>
+
 ## 功能特性
 
 - **多模型支持** — 默认 Claude 模型，可通过自定义模型接入任何 OpenAI 兼容 API
