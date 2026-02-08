@@ -7,22 +7,29 @@ const STORAGE_KEYS = {
     CUSTOM_MODELS: 'ai_chat_custom_models'
 };
 
+function loadJSON(key, fallback) {
+    const saved = localStorage.getItem(key);
+    return saved ? JSON.parse(saved) : fallback;
+}
+
+function saveJSON(key, value) {
+    localStorage.setItem(key, JSON.stringify(value));
+}
+
 export function loadConversations() {
-    const saved = localStorage.getItem(STORAGE_KEYS.CONVERSATIONS);
-    return saved ? JSON.parse(saved) : [];
+    return loadJSON(STORAGE_KEYS.CONVERSATIONS, []);
 }
 
 export function saveConversations(conversations) {
-    localStorage.setItem(STORAGE_KEYS.CONVERSATIONS, JSON.stringify(conversations));
+    saveJSON(STORAGE_KEYS.CONVERSATIONS, conversations);
 }
 
 export function loadAPIConfig() {
-    const saved = localStorage.getItem(STORAGE_KEYS.API_CONFIG);
-    return saved ? JSON.parse(saved) : null;
+    return loadJSON(STORAGE_KEYS.API_CONFIG, null);
 }
 
 export function saveAPIConfig(config) {
-    localStorage.setItem(STORAGE_KEYS.API_CONFIG, JSON.stringify(config));
+    saveJSON(STORAGE_KEYS.API_CONFIG, config);
 }
 
 export function loadTheme() {
@@ -50,10 +57,9 @@ export function saveLanguage(lang) {
 }
 
 export function loadCustomModels() {
-    const saved = localStorage.getItem(STORAGE_KEYS.CUSTOM_MODELS);
-    return saved ? JSON.parse(saved) : [];
+    return loadJSON(STORAGE_KEYS.CUSTOM_MODELS, []);
 }
 
 export function saveCustomModels(models) {
-    localStorage.setItem(STORAGE_KEYS.CUSTOM_MODELS, JSON.stringify(models));
+    saveJSON(STORAGE_KEYS.CUSTOM_MODELS, models);
 }

@@ -1,11 +1,8 @@
-/**
- * Conversation Manager Module
- */
-
 import { loadConversations, saveConversations } from './storage.js';
 import { t } from './i18n.js';
 
 const TITLE_MAX_LENGTH = 30;
+const DEFAULT_TITLES = new Set(['新对话', 'New Chat']);
 
 export class ConversationManager {
     constructor() {
@@ -70,20 +67,22 @@ export class ConversationManager {
 
     addMessage(role, content) {
         const conversation = this.getCurrent();
+        const now = new Date().toISOString();
         const message = {
             id: Date.now().toString(),
             role,
             content,
-            timestamp: new Date().toISOString()
+            timestamp: now
         };
 
         conversation.messages.push(message);
-        conversation.updatedAt = new Date().toISOString();
+        conversation.updatedAt = now;
 
-        if (role === 'user' && conversation.messages.length === 1 &&
-            (conversation.title === '新对话' || conversation.title === 'New Chat')) {
-            const truncated = content.substring(0, TITLE_MAX_LENGTH);
-            conversation.title = content.length > TITLE_MAX_LENGTH ? truncated + '...' : truncated;
+        const isFirstUserMessage = role === 'user' && conversation.messages.length === 1;
+        if (isFirstUserMessage && DEFAULT_TITLES.has(conversation.title)) {
+            conversation.title = content.length > TITLE_MAX_LENGTH
+                ? content.substring(0, TITLE_MAX_LENGTH) + '...'
+                : content;
         }
 
         this.save();

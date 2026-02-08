@@ -1,7 +1,3 @@
-/**
- * API Configuration Manager Module
- */
-
 import { loadAPIConfig, saveAPIConfig, loadDevMode, saveDevMode, loadCustomModels, saveCustomModels } from './storage.js';
 import { t } from './i18n.js';
 
@@ -27,26 +23,18 @@ export class ConfigManager {
     async load() {
         await this.loadServerConfig();
 
-        const savedConfig = loadAPIConfig();
-
-        if (this.serverConfig) {
-            if (this.serverConfig.base_url) {
-                this.config.baseUrl = this.serverConfig.base_url;
-            }
-
-            const models = this.useProxy()
-                ? (this.serverConfig.allowed_models || [])
-                : DEFAULT_MODELS;
-            const defaultModel = models.find(m => m.default);
-            if (defaultModel) {
-                this.config.model = defaultModel.id;
-            }
-
-            this.renderModelSelector(models);
-        } else {
-            this.renderModelSelector(DEFAULT_MODELS);
+        if (this.serverConfig?.base_url) {
+            this.config.baseUrl = this.serverConfig.base_url;
         }
 
+        const models = this.getAvailableModels();
+        const defaultModel = models.find(m => m.default);
+        if (defaultModel) {
+            this.config.model = defaultModel.id;
+        }
+        this.renderModelSelector(models);
+
+        const savedConfig = loadAPIConfig();
         if (savedConfig) {
             if (savedConfig.apiKey) this.config.apiKey = savedConfig.apiKey;
             if (savedConfig.baseUrl) this.config.baseUrl = savedConfig.baseUrl;
@@ -76,6 +64,13 @@ export class ConfigManager {
         }
     }
 
+    getAvailableModels() {
+        if (this.useProxy() && this.serverConfig?.allowed_models) {
+            return this.serverConfig.allowed_models;
+        }
+        return DEFAULT_MODELS;
+    }
+
     isModelAllowed(modelId) {
         if (this.customModels.some(m => m.model.id === modelId)) return true;
         if (this.useProxy() && this.serverConfig?.allowed_models?.length) {
@@ -90,7 +85,6 @@ export class ConfigManager {
 
         selector.innerHTML = '';
 
-        // Built-in models
         models.forEach(model => {
             const option = document.createElement('option');
             option.value = model.id;
@@ -99,7 +93,6 @@ export class ConfigManager {
             selector.appendChild(option);
         });
 
-        // Custom models
         if (this.customModels.length) {
             const group = document.createElement('optgroup');
             group.label = t('settings.customModelsGroup');
@@ -162,10 +155,6 @@ export class ConfigManager {
         console.log(`Web search ${enabled ? 'enabled' : 'disabled'}`);
     }
 
-    /**
-     * Whether to use server proxy mode
-     * Only uses proxy when dev mode is on and server has a key
-     */
     useProxy() {
         return this.devMode && !!this.serverConfig?.has_server_key;
     }
@@ -184,15 +173,11 @@ export class ConfigManager {
         return !!this.config.apiKey || this.useProxy() || !!this.getCustomModelConfig();
     }
 
-    /**
-     * Get the currently selected custom model config (if any)
-     */
     getCustomModelConfig() {
         return this.customModels.find(m => m.model.id === this.config.model) || null;
     }
 
     addCustomModel(modelConfig) {
-        // Deduplicate
         this.customModels = this.customModels.filter(m => m.model.id !== modelConfig.model.id);
         this.customModels.push(modelConfig);
         saveCustomModels(this.customModels);
@@ -202,7 +187,6 @@ export class ConfigManager {
     removeCustomModel(modelId) {
         this.customModels = this.customModels.filter(m => m.model.id !== modelId);
         saveCustomModels(this.customModels);
-        // If the deleted model was selected, switch back to default
         if (this.config.model === modelId) {
             const defaultModel = DEFAULT_MODELS.find(m => m.default) || DEFAULT_MODELS[0];
             this.config.model = defaultModel.id;
@@ -216,10 +200,7 @@ export class ConfigManager {
     }
 
     refreshModelSelector() {
-        const models = this.useProxy()
-            ? (this.serverConfig?.allowed_models || [])
-            : DEFAULT_MODELS;
-        this.renderModelSelector(models);
+        this.renderModelSelector(this.getAvailableModels());
         this.updateUI();
     }
 }

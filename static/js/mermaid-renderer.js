@@ -13,30 +13,27 @@ export class MermaidRenderer {
             const wrapper = document.createElement('div');
             wrapper.className = 'mermaid-wrapper';
 
-            const id = 'mermaid-' + Math.random().toString(36).substr(2, 9);
+            const id = 'mermaid-' + Math.random().toString(36).slice(2, 11);
 
             const tempDiv = document.createElement('div');
             tempDiv.style.display = 'none';
             tempDiv.id = id;
-            tempDiv.textContent = code;
             document.body.appendChild(tempDiv);
 
             const { svg } = await mermaid.render(id + '-svg', code);
 
-            document.body.removeChild(tempDiv);
+            tempDiv.remove();
 
             const mermaidDiv = document.createElement('div');
             mermaidDiv.className = 'mermaid';
             mermaidDiv.innerHTML = svg;
-            mermaidDiv.setAttribute('data-original-code', code);
+            mermaidDiv.dataset.originalCode = code;
 
-            wrapper.appendChild(mermaidDiv);
-
-            pre.parentNode.insertBefore(wrapper, pre);
-            pre.remove();
+            wrapper.append(mermaidDiv);
+            pre.replaceWith(wrapper);
 
             this.addActions(wrapper, code);
-            this.addDoubleClickPreview(wrapper, code);
+            this.addDoubleClickPreview(wrapper);
         } catch (e) {
             console.error('Mermaid render failed:', e);
             this.showError(pre, e, code);
@@ -46,11 +43,13 @@ export class MermaidRenderer {
     showError(pre, error, code) {
         const errorDiv = document.createElement('div');
         errorDiv.className = 'mermaid-error';
-        errorDiv.style.padding = '16px';
-        errorDiv.style.background = 'var(--bg-secondary)';
-        errorDiv.style.border = '1px solid var(--border-color)';
-        errorDiv.style.borderRadius = '8px';
-        errorDiv.style.color = 'var(--text-primary)';
+        Object.assign(errorDiv.style, {
+            padding: '16px',
+            background: 'var(--bg-secondary)',
+            border: '1px solid var(--border-color)',
+            borderRadius: '8px',
+            color: 'var(--text-primary)',
+        });
         errorDiv.innerHTML = `
             <div style="font-weight: 600; margin-bottom: 8px;">⚠️ ${t('mermaid.renderFailed')}</div>
             <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">${error.message}</div>
@@ -60,8 +59,7 @@ export class MermaidRenderer {
             </details>
         `;
 
-        pre.parentNode.insertBefore(errorDiv, pre);
-        pre.remove();
+        pre.replaceWith(errorDiv);
     }
 
     createActionButton(label, onClick) {
@@ -122,25 +120,21 @@ export class MermaidRenderer {
             }
         });
 
-        actions.appendChild(copyImageBtn);
-        actions.appendChild(downloadBtn);
-        actions.appendChild(copyCodeBtn);
-        wrapper.appendChild(actions);
+        actions.append(copyImageBtn, downloadBtn, copyCodeBtn);
+        wrapper.append(actions);
     }
 
-    addDoubleClickPreview(wrapper, code) {
+    addDoubleClickPreview(wrapper) {
         const mermaidDiv = wrapper.querySelector('.mermaid');
         if (!mermaidDiv) return;
 
         mermaidDiv.style.cursor = 'pointer';
         mermaidDiv.title = t('mermaid.dblClickHint');
 
-        mermaidDiv.addEventListener('dblclick', () => {
-            this.openPreview(wrapper, code);
-        });
+        mermaidDiv.addEventListener('dblclick', () => this.openPreview(wrapper));
     }
 
-    async openPreview(wrapper, code) {
+    async openPreview(wrapper) {
         const modal = document.getElementById('imageModal');
         const modalImg = document.getElementById('imageModalImg');
         const modalClose = document.getElementById('imageModalClose');
@@ -219,10 +213,6 @@ export class MermaidRenderer {
             }
         };
 
-        let isZoomed = false;
-        modalImg.onclick = () => {
-            isZoomed = !isZoomed;
-            modalImg.classList.toggle('zoomed', isZoomed);
-        };
+        modalImg.onclick = () => modalImg.classList.toggle('zoomed');
     }
 }

@@ -1,7 +1,3 @@
-/**
- * UI Manager Module
- */
-
 import { escapeHtml } from './utils.js';
 import { loadTheme, saveTheme } from './storage.js';
 import { t, getLanguage } from './i18n.js';
@@ -73,9 +69,7 @@ export class UIManager {
 
         document.getElementById('welcomeScreen').classList.add('hidden');
 
-        conversation.messages.forEach(message => {
-            this.appendMessageElement(message);
-        });
+        conversation.messages.forEach(msg => this.appendMessageElement(msg));
 
         this.scrollToBottom();
     }
@@ -124,7 +118,6 @@ export class UIManager {
     }
 
     finalRenderLastMessage(content) {
-        // Clear pending throttled render
         if (this._streamRenderTimer) {
             clearTimeout(this._streamRenderTimer);
             this._streamRenderTimer = null;
@@ -147,8 +140,7 @@ export class UIManager {
 
     showTypingIndicator() {
         const container = document.getElementById('messages');
-        const template = document.getElementById('typingIndicatorTemplate');
-        const indicator = template.content.cloneNode(true);
+        const indicator = document.getElementById('typingIndicatorTemplate').content.cloneNode(true);
 
         const messageEl = document.createElement('div');
         messageEl.className = 'message assistant typing-message';

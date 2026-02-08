@@ -14,7 +14,6 @@ CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.j
 
 
 def load_config():
-    """Load server configuration file"""
     try:
         with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
             return json.load(f)
@@ -121,10 +120,7 @@ class CORSRequestHandler(SimpleHTTPRequestHandler):
             self.send_header('Cache-Control', 'no-cache')
             self.end_headers()
 
-            while True:
-                chunk = resp.read(4096)
-                if not chunk:
-                    break
+            for chunk in iter(lambda: resp.read(4096), b''):
                 self.wfile.write(chunk)
                 self.wfile.flush()
 
@@ -138,14 +134,12 @@ class CORSRequestHandler(SimpleHTTPRequestHandler):
             self.send_json_error(502, f'Unable to connect to API: {e.reason}')
 
     def send_json(self, code, data):
-        """Send JSON response"""
         self.send_response(code)
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
         self.wfile.write(json.dumps(data, ensure_ascii=False).encode('utf-8'))
 
     def send_json_error(self, code, message):
-        """Send JSON error response"""
         self.send_json(code, {'error': {'message': message}})
 
     def log_message(self, format, *args):
@@ -163,7 +157,7 @@ def run_server(port=8080, directory='static'):
     httpd = HTTPServer(('', port), CORSRequestHandler)
 
     print('=' * 60)
-    print(f'LLM Chat Frontend started!')
+    print('LLM Chat Frontend started!')
     print(f'URL: http://localhost:{port}')
     print(f'Static files directory: {os.getcwd()}')
     print(f'Config file: {CONFIG_FILE}')

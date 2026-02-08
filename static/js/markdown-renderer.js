@@ -1,7 +1,3 @@
-/**
- * Markdown Renderer Module
- */
-
 import { MermaidRenderer } from './mermaid-renderer.js';
 import { escapeHtml, showButtonFeedback, getMermaidConfig } from './utils.js';
 import { t } from './i18n.js';
@@ -11,13 +7,13 @@ const MERMAID_KEYWORDS = /^(graph|flowchart|sequenceDiagram|classDiagram|stateDi
 export class MarkdownRenderer {
     constructor() {
         this.mermaidRenderer = new MermaidRenderer();
-        this._mermaidCache = new Map(); // code -> rendered wrapper element (clone)
+        this._mermaidCache = new Map();
         this.setup();
     }
 
     setup() {
         marked.setOptions({
-            highlight: function(code, lang) {
+            highlight: (code, lang) => {
                 if (lang && hljs.getLanguage(lang)) {
                     try {
                         return hljs.highlight(code, { language: lang }).value;
@@ -48,35 +44,30 @@ export class MarkdownRenderer {
             const codeText = block.textContent.trim();
             const isMermaid = lang === 'mermaid' || MERMAID_KEYWORDS.test(codeText);
 
-            if (isMermaid) {
-                if (!isStreaming || (completedMermaidCodes && completedMermaidCodes.has(codeText))) {
-                    // Block is complete - check cache first to avoid flicker
-                    const cached = this._mermaidCache.get(codeText);
-                    if (cached) {
-                        const clone = cached.cloneNode(true);
-                        block.parentElement.parentNode.insertBefore(clone, block.parentElement);
-                        block.parentElement.remove();
-                        this.mermaidRenderer.addActions(clone, codeText);
-                        this.mermaidRenderer.addDoubleClickPreview(clone, codeText);
-                    } else {
-                        this._renderAndCacheMermaid(block.parentElement, codeText);
-                    }
+            if (!isMermaid) {
+                this.addCopyButton(block.parentElement);
+                return;
+            }
+
+            if (!isStreaming || completedMermaidCodes?.has(codeText)) {
+                const cached = this._mermaidCache.get(codeText);
+                if (cached) {
+                    const clone = cached.cloneNode(true);
+                    block.parentElement.parentNode.insertBefore(clone, block.parentElement);
+                    block.parentElement.remove();
+                    this.mermaidRenderer.addActions(clone, codeText);
+                    this.mermaidRenderer.addDoubleClickPreview(clone);
                 } else {
-                    // Still streaming, block not complete yet
-                    this.showMermaidPlaceholder(block.parentElement, block.textContent);
+                    this._renderAndCacheMermaid(block.parentElement, codeText);
                 }
             } else {
-                this.addCopyButton(block.parentElement);
+                this.showMermaidPlaceholder(block.parentElement, block.textContent);
             }
         });
     }
 
-    /**
-     * Find mermaid code blocks in raw markdown that have closing fences
-     */
     _findCompletedMermaidBlocks(content) {
         const completed = new Set();
-        // Match fenced code blocks: ```mermaid ... ``` or ``` with mermaid content
         const fenceRegex = /```(\w*)\n([\s\S]*?)```/g;
         let match;
         while ((match = fenceRegex.exec(content)) !== null) {
@@ -89,26 +80,21 @@ export class MarkdownRenderer {
         return completed;
     }
 
-    /**
-     * Render mermaid and cache the result for reuse during streaming
-     */
     async _renderAndCacheMermaid(pre, code) {
-        // Remember parent before render (render removes pre from DOM)
         const parent = pre.parentNode;
         await this.mermaidRenderer.render(pre, code);
-        // Find the wrapper that was inserted in place of pre
-        if (parent) {
-            const wrappers = parent.querySelectorAll('.mermaid-wrapper');
-            for (const wrapper of wrappers) {
-                const mermaidDiv = wrapper.querySelector('.mermaid');
-                if (mermaidDiv && mermaidDiv.getAttribute('data-original-code') === code) {
-                    // Cache a clean clone (without action buttons, they get re-added)
-                    const cacheClone = wrapper.cloneNode(true);
-                    const actions = cacheClone.querySelector('.mermaid-actions');
-                    if (actions) actions.remove();
-                    this._mermaidCache.set(code, cacheClone);
-                    break;
-                }
+
+        if (!parent) return;
+
+        const wrappers = parent.querySelectorAll('.mermaid-wrapper');
+        for (const wrapper of wrappers) {
+            const mermaidDiv = wrapper.querySelector('.mermaid');
+            if (mermaidDiv && mermaidDiv.getAttribute('data-original-code') === code) {
+                const cacheClone = wrapper.cloneNode(true);
+                const actions = cacheClone.querySelector('.mermaid-actions');
+                if (actions) actions.remove();
+                this._mermaidCache.set(code, cacheClone);
+                break;
             }
         }
     }

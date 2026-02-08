@@ -1,8 +1,3 @@
-/**
- * API Service Module
- * Uses XMLHttpRequest for streaming output, compatible with mobile browsers
- */
-
 import { t } from './i18n.js';
 
 export class APIService {
@@ -11,13 +6,6 @@ export class APIService {
         this._xhr = null;
     }
 
-    /**
-     * Send message and handle streaming response
-     * @param {Array} messages - Message history
-     * @param {Function} onChunk - Callback for receiving text chunks
-     * @param {Function} onComplete - Callback when complete
-     * @returns {Promise<string>} Full response content
-     */
     async streamMessage(messages, onChunk, onComplete) {
         const config = this.configManager.getConfig();
         const useProxy = this.configManager.useProxy();
@@ -66,9 +54,6 @@ export class APIService {
         }, onChunk, onComplete);
     }
 
-    /**
-     * Stream request via XHR, compatible with mobile
-     */
     _streamXHR({ url, headers, body, parseChunk }, onChunk, onComplete) {
         return new Promise((resolve, reject) => {
             const xhr = new XMLHttpRequest();
@@ -76,6 +61,19 @@ export class APIService {
 
             let fullContent = '';
             let processedLength = 0;
+
+            const extractDeltas = (text) => {
+                const lines = text.split('\n');
+                const deltas = [];
+                for (const line of lines) {
+                    if (!line.startsWith('data: ')) continue;
+                    const data = line.slice(6);
+                    if (data === '[DONE]') continue;
+                    const delta = parseChunk(data);
+                    if (delta) deltas.push(delta);
+                }
+                return deltas;
+            };
 
             xhr.open('POST', url);
             for (const [key, value] of Object.entries(headers)) {
@@ -89,20 +87,11 @@ export class APIService {
                     const newText = text.substring(processedLength);
                     processedLength = text.length;
 
-                    const lines = newText.split('\n');
-                    for (const line of lines) {
-                        if (!line.startsWith('data: ')) continue;
-                        const data = line.slice(6);
-                        if (data === '[DONE]') continue;
-
-                        const delta = parseChunk(data);
-                        if (delta) {
-                            fullContent += delta;
-                            if (onChunk) onChunk(delta, fullContent);
-                        }
+                    for (const delta of extractDeltas(newText)) {
+                        fullContent += delta;
+                        if (onChunk) onChunk(delta, fullContent);
                     }
                 } catch (e) {
-                    // responseText may not be accessible in certain states
                 }
             };
 
@@ -114,18 +103,10 @@ export class APIService {
             xhr.onload = () => {
                 this._xhr = null;
                 if (xhr.status >= 200 && xhr.status < 300) {
-                    // Process remaining data that onprogress may have missed
                     const remaining = xhr.responseText.substring(processedLength);
                     if (remaining) {
-                        const lines = remaining.split('\n');
-                        for (const line of lines) {
-                            if (!line.startsWith('data: ')) continue;
-                            const data = line.slice(6);
-                            if (data === '[DONE]') continue;
-                            const delta = parseChunk(data);
-                            if (delta) {
-                                fullContent += delta;
-                            }
+                        for (const delta of extractDeltas(remaining)) {
+                            fullContent += delta;
                         }
                     }
                     if (onComplete) onComplete(fullContent);
@@ -136,7 +117,6 @@ export class APIService {
                         const errorData = JSON.parse(xhr.responseText);
                         errorMsg = errorData.error?.message || errorMsg;
                     } catch (e) {
-                        // ignore
                     }
                     reject(new Error(errorMsg));
                 }
@@ -174,7 +154,6 @@ export class APIService {
                 return json.delta.text;
             }
         } catch (e) {
-            // ignore
         }
         return '';
     }

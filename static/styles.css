@@ -293,8 +293,9 @@ html, body {
     flex-shrink: 0;
 }
 
-/* Settings Modal */
-.settings-modal {
+/* Shared Modal Styles */
+.settings-modal,
+.image-modal {
     position: fixed;
     top: 0;
     left: 0;
@@ -307,33 +308,42 @@ html, body {
     animation: fadeIn 0.2s ease;
 }
 
-.settings-modal.active {
+.settings-modal.active,
+.image-modal.active {
     display: flex;
 }
 
-.settings-modal-backdrop {
+.settings-modal-backdrop,
+.image-modal-backdrop {
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(4px);
     cursor: pointer;
 }
 
-.settings-modal-content {
+.settings-modal-backdrop {
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.settings-modal-content,
+.image-modal-content {
     position: relative;
-    width: 480px;
-    max-width: 90vw;
-    max-height: 80vh;
     background: var(--bg-primary);
     border-radius: var(--radius-xl);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     display: flex;
     flex-direction: column;
     overflow: hidden;
     animation: scaleIn 0.3s ease;
+}
+
+.settings-modal-content {
+    width: 480px;
+    max-width: 90vw;
+    max-height: 80vh;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
 .settings-modal-header {
@@ -853,7 +863,6 @@ html, body {
 .message-text.markdown-body {
     background: transparent !important;
     color: var(--text-primary) !important;
-    font-size: 15px;
 }
 
 .message-text.markdown-body pre {
@@ -910,6 +919,31 @@ html, body {
     font-weight: 600;
 }
 
+/* Code & Mermaid Action Buttons (shared styles) */
+.code-copy-btn,
+.mermaid-btn {
+    padding: 6px 12px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 12px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.code-copy-btn:hover,
+.mermaid-btn:hover {
+    background: var(--bg-hover);
+}
+
+.code-copy-btn.copied,
+.mermaid-btn.copied {
+    background: var(--accent-color);
+    color: white;
+    border-color: var(--accent-color);
+}
+
 /* Code Block Copy Button */
 .code-block-wrapper {
     position: relative;
@@ -919,29 +953,11 @@ html, body {
     position: absolute;
     top: 8px;
     right: 8px;
-    padding: 6px 12px;
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
-    color: var(--text-primary);
-    font-size: 12px;
-    cursor: pointer;
     opacity: 0;
-    transition: var(--transition);
 }
 
 .code-block-wrapper:hover .code-copy-btn {
     opacity: 1;
-}
-
-.code-copy-btn:hover {
-    background: var(--bg-hover);
-}
-
-.code-copy-btn.copied {
-    background: var(--accent-color);
-    color: white;
-    border-color: var(--accent-color);
 }
 
 /* Mermaid Charts */
@@ -977,27 +993,9 @@ html, body {
 }
 
 .mermaid-btn {
-    padding: 6px 12px;
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
-    color: var(--text-primary);
-    font-size: 12px;
-    cursor: pointer;
-    transition: var(--transition);
     display: flex;
     align-items: center;
     gap: 4px;
-}
-
-.mermaid-btn:hover {
-    background: var(--bg-hover);
-}
-
-.mermaid-btn.copied {
-    background: var(--accent-color);
-    color: white;
-    border-color: var(--accent-color);
 }
 
 .mermaid-placeholder {
@@ -1105,8 +1103,7 @@ html, body {
     flex-shrink: 0;
 }
 
-.send-btn:hover:not(:disabled),
-.stop-btn:hover {
+.send-btn:hover:not(:disabled) {
     background: var(--accent-hover);
     transform: scale(1.05);
 }
@@ -1122,6 +1119,7 @@ html, body {
 
 .stop-btn:hover {
     background: #dc2626;
+    transform: scale(1.05);
 }
 
 .input-footer {
@@ -1163,45 +1161,14 @@ html, body {
 }
 
 /* Image Preview Modal */
-.image-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 9999;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    animation: fadeIn 0.2s ease;
-}
-
-.image-modal.active {
-    display: flex;
-}
-
 .image-modal-backdrop {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
     background: rgba(0, 0, 0, 0.85);
-    backdrop-filter: blur(4px);
-    cursor: pointer;
 }
 
 .image-modal-content {
-    position: relative;
     max-width: 95vw;
     max-height: 95vh;
-    background: var(--bg-primary);
-    border-radius: var(--radius-xl);
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    animation: scaleIn 0.3s ease;
 }
 
 @keyframes scaleIn {
@@ -1328,10 +1295,6 @@ html, body {
         transform: translateX(0);
     }
 
-    .sidebar.collapsed {
-        transform: translateX(-100%);
-    }
-
     .sidebar-overlay {
         display: none;
         position: fixed;
@@ -1422,10 +1385,7 @@ html, body {
         font-size: 11px;
     }
 
-    .message-text {
-        font-size: 14px;
-    }
-
+    .message-text,
     .message-text.markdown-body {
         font-size: 14px;
     }

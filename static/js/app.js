@@ -9,7 +9,7 @@ import { APIService } from './api-service.js';
 import { MarkdownRenderer } from './markdown-renderer.js';
 import { UIManager } from './ui-manager.js';
 import { escapeHtml } from './utils.js';
-import { applyToDOM, toggleLanguage, setLanguage, getLanguage, t } from './i18n.js';
+import { applyToDOM, setLanguage, getLanguage, t } from './i18n.js';
 
 class ChatApp {
     constructor() {
@@ -30,8 +30,6 @@ class ChatApp {
     }
 
     setupEventListeners() {
-        const overlay = document.getElementById('sidebarOverlay');
-
         document.getElementById('newChatBtn').addEventListener('click', () => {
             this.conversationManager.createNew();
             this.uiManager.renderConversations();
@@ -41,14 +39,12 @@ class ChatApp {
         });
 
         document.getElementById('sidebarToggle').addEventListener('click', () => this.toggleSidebar());
-        overlay.addEventListener('click', () => this.closeSidebar());
+        document.getElementById('sidebarOverlay').addEventListener('click', () => this.closeSidebar());
 
-        // Settings button
         document.getElementById('settingsBtn').addEventListener('click', () => this.openSettings());
         document.getElementById('settingsModalClose').addEventListener('click', () => this.closeSettings());
         document.querySelector('.settings-modal-backdrop').addEventListener('click', () => this.closeSettings());
 
-        // Language toggle
         document.getElementById('langToggleGroup').addEventListener('click', (e) => {
             const btn = e.target.closest('[data-lang]');
             if (!btn) return;
@@ -56,7 +52,6 @@ class ChatApp {
             this.updateSettingsUI();
         });
 
-        // Theme toggle
         document.getElementById('themeToggleGroup').addEventListener('click', (e) => {
             const btn = e.target.closest('[data-theme]');
             if (!btn) return;
@@ -67,7 +62,6 @@ class ChatApp {
             this.updateSettingsUI();
         });
 
-        // Custom models
         document.getElementById('addModelBtn').addEventListener('click', () => this.showModelForm());
         document.getElementById('cancelModelBtn').addEventListener('click', () => this.hideModelForm());
         document.getElementById('saveModelBtn').addEventListener('click', () => this.saveCustomModel());
@@ -84,7 +78,6 @@ class ChatApp {
             this.configManager.toggleDevMode(e.target.checked);
         });
 
-        // ESC to close settings modal
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') this.closeSettings();
         });
@@ -213,25 +206,18 @@ class ChatApp {
 
     showModelForm(editModel = null) {
         const form = document.getElementById('customModelForm');
-        const title = document.getElementById('modelFormTitle');
-
         form.style.display = 'block';
 
+        document.getElementById('modelFormTitle').textContent = t(editModel ? 'settings.editModel' : 'settings.addModel');
+        document.getElementById('cmProvider').value = editModel?.provider || '';
+        document.getElementById('cmBaseUrl').value = editModel?.base_url || '';
+        document.getElementById('cmApiKey').value = editModel?.api_key || '';
+        document.getElementById('cmModelId').value = editModel?.model.id || '';
+        document.getElementById('cmModelName').value = editModel?.model.name || '';
+
         if (editModel) {
-            title.textContent = t('settings.editModel');
-            document.getElementById('cmProvider').value = editModel.provider || '';
-            document.getElementById('cmBaseUrl').value = editModel.base_url || '';
-            document.getElementById('cmApiKey').value = editModel.api_key || '';
-            document.getElementById('cmModelId').value = editModel.model.id || '';
-            document.getElementById('cmModelName').value = editModel.model.name || '';
             form.dataset.editingId = editModel.model.id;
         } else {
-            title.textContent = t('settings.addModel');
-            document.getElementById('cmProvider').value = '';
-            document.getElementById('cmBaseUrl').value = '';
-            document.getElementById('cmApiKey').value = '';
-            document.getElementById('cmModelId').value = '';
-            document.getElementById('cmModelName').value = '';
             delete form.dataset.editingId;
         }
     }
