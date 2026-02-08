@@ -6,7 +6,7 @@
 
 ---
 
-[WebLLM Chat Demo Video](assets/ai-chat-demo.webm)
+[WebLLM Chat Demo Video](https://github.com/user-attachments/assets/3d499658-4c7f-4743-81c2-c3e127f73edf)
 
 ## 功能特性
 
