@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>AI Chat Assistant</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5/github-markdown.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11/styles/github-dark.min.css">
+    <script>
+        // Hide page for non-default language to prevent translation flicker
+        if (localStorage.getItem('ai_chat_language') === 'zh') {
+            document.documentElement.style.visibility = 'hidden';
+        }
+    </script>
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <button class="new-chat-btn" id="newChatBtn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    <span data-i18n="sidebar.newChat">New Chat</span>
+                </button>
+            </div>
+
+            <div class="conversations-list" id="conversationsList"></div>
+
+            <div class="sidebar-footer">
+                <label class="dev-mode-toggle" style="display: none;">
+                    <input type="checkbox" id="devModeToggle">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="16 18 22 12 16 6"></polyline>
+                        <polyline points="8 6 2 12 8 18"></polyline>
+                    </svg>
+                    <span data-i18n="sidebar.devMode">Developer Mode</span>
+                </label>
+                <button class="settings-btn" id="settingsBtn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                    <span data-i18n="settings.title">Settings</span>
+                </button>
+            </div>
+        </aside>
+
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <main class="main-content">
+            <header class="header">
+                <button class="sidebar-toggle" id="sidebarToggle">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+                <h1 class="app-title">AI Chat</h1>
+                <div class="header-actions">
+                    <label class="web-search-toggle">
+                        <input type="checkbox" id="webSearchToggle">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="2" y1="12" x2="22" y2="12"></line>
+                            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                        </svg>
+                        <span data-i18n="header.webSearch">Web Search</span>
+                    </label>
+                    <select class="model-selector" id="modelSelector">
+                        <option value="claude-opus-4-6">Opus 4.6</option>
+                        <option value="claude-sonnet-4-5-20250929" selected>Sonnet 4.5</option>
+                        <option value="claude-haiku-4-5-20251001">Haiku 4.5</option>
+                    </select>
+                </div>
+            </header>
+
+            <div class="messages-container" id="messagesContainer">
+                <div class="welcome-screen" id="welcomeScreen">
+                    <div class="welcome-icon">
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                    </div>
+                    <h2 data-i18n="welcome.greeting">Hello! I'm AI Chat Assistant</h2>
+                    <p data-i18n="welcome.subtitle">How can I help you?</p>
+                    <div class="suggestion-cards">
+                        <button class="suggestion-card" data-prompt="Explain what machine learning is" data-i18n-prompt="welcome.prompt1">
+                            <span class="suggestion-icon">🤖</span>
+                            <span data-i18n="welcome.card1">Explain ML</span>
+                        </button>
+                        <button class="suggestion-card" data-prompt="Write a Python quicksort implementation" data-i18n-prompt="welcome.prompt2">
+                            <span class="suggestion-icon">💻</span>
+                            <span data-i18n="welcome.card2">Code Examples</span>
+                        </button>
+                        <button class="suggestion-card" data-prompt="Help me analyze time complexity of this code" data-i18n-prompt="welcome.prompt3">
+                            <span class="suggestion-icon">📊</span>
+                            <span data-i18n="welcome.card3">Analyze Complexity</span>
+                        </button>
+                        <button class="suggestion-card" data-prompt="Give me tips for learning frontend development" data-i18n-prompt="welcome.prompt4">
+                            <span class="suggestion-icon">🎨</span>
+                            <span data-i18n="welcome.card4">Learning Tips</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="messages" id="messages"></div>
+            </div>
+
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <textarea
+                        class="message-input"
+                        id="messageInput"
+                        placeholder="Send a message ..."
+                        data-i18n-placeholder="input.placeholder"
+                        rows="1"
+                    ></textarea>
+                    <button class="send-btn" id="sendBtn" disabled>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </button>
+                    <button class="stop-btn" id="stopBtn" style="display: none;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <rect x="6" y="6" width="12" height="12" rx="2"></rect>
+                        </svg>
+                    </button>
+                </div>
+                <div class="input-footer">
+                    <span class="char-count" id="charCount">0</span>
+                    <span class="tip" data-i18n="input.tip">Shift + Enter for new line, Enter to send</span>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <template id="typingIndicatorTemplate">
+        <div class="typing-indicator">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </template>
+
+    <div class="image-modal" id="imageModal">
+        <div class="image-modal-backdrop"></div>
+        <div class="image-modal-content">
+            <button class="image-modal-close" id="imageModalClose">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+            <div class="image-modal-body">
+                <img class="image-modal-img" id="imageModalImg" alt="Chart Preview" data-i18n-alt="modal.imageAlt">
+            </div>
+            <div class="image-modal-footer">
+                <button class="modal-btn" id="modalDownloadBtn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    <span data-i18n="modal.download">Download Image</span>
+                </button>
+                <button class="modal-btn" id="modalCopyBtn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                    <span data-i18n="modal.copyImage">Copy Image</span>
+                </button>
+                <span class="modal-tip" data-i18n="modal.tip">Tip: Press ESC or click backdrop to close</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="settings-modal" id="settingsModal">
+        <div class="settings-modal-backdrop"></div>
+        <div class="settings-modal-content">
+            <div class="settings-modal-header">
+                <h2 data-i18n="settings.title">Settings</h2>
+                <button class="settings-modal-close" id="settingsModalClose">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="settings-modal-body">
+                <div class="settings-item">
+                    <div class="settings-item-info">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="2" y1="12" x2="22" y2="12"></line>
+                            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                        </svg>
+                        <div>
+                            <div class="settings-item-label" data-i18n="settings.language">Language</div>
+                            <div class="settings-item-desc" data-i18n="settings.languageDesc">Choose display language</div>
+                        </div>
+                    </div>
+                    <div class="settings-toggle-group" id="langToggleGroup">
+                        <button class="settings-toggle-option" data-lang="zh" data-i18n="settings.langZh">中文</button>
+                        <button class="settings-toggle-option active" data-lang="en" data-i18n="settings.langEn">English</button>
+                    </div>
+                </div>
+                <div class="settings-item">
+                    <div class="settings-item-info">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="5"></circle>
+                            <line x1="12" y1="1" x2="12" y2="3"></line>
+                            <line x1="12" y1="21" x2="12" y2="23"></line>
+                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                            <line x1="1" y1="12" x2="3" y2="12"></line>
+                            <line x1="21" y1="12" x2="23" y2="12"></line>
+                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                        </svg>
+                        <div>
+                            <div class="settings-item-label" data-i18n="settings.theme">Theme</div>
+                            <div class="settings-item-desc" data-i18n="settings.themeDesc">Choose interface theme</div>
+                        </div>
+                    </div>
+                    <div class="settings-toggle-group" id="themeToggleGroup">
+                        <button class="settings-toggle-option active" data-theme="light" data-i18n="settings.themeLight">Light</button>
+                        <button class="settings-toggle-option" data-theme="dark" data-i18n="settings.themeDark">Dark</button>
+                    </div>
+                </div>
+
+                <div class="settings-section-divider"></div>
+
+                <div class="settings-section-header">
+                    <div class="settings-item-info">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                            <line x1="8" y1="21" x2="16" y2="21"></line>
+                            <line x1="12" y1="17" x2="12" y2="21"></line>
+                        </svg>
+                        <div>
+                            <div class="settings-item-label" data-i18n="settings.customModels">Custom Models</div>
+                            <div class="settings-item-desc" data-i18n="settings.customModelsDesc">Add OpenAI-compatible third-party models</div>
+                        </div>
+                    </div>
+                    <button class="settings-add-btn" id="addModelBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        <span data-i18n="settings.addModel">Add Model</span>
+                    </button>
+                </div>
+
+                <div class="custom-models-list" id="customModelsList">
+                    <div class="custom-models-empty" data-i18n="settings.noCustomModels">No custom models yet</div>
+                </div>
+
+                <div class="custom-model-form" id="customModelForm" style="display: none;">
+                    <h3 id="modelFormTitle" data-i18n="settings.addModel">Add Model</h3>
+                    <div class="form-group">
+                        <label data-i18n="settings.provider">Provider</label>
+                        <input type="text" id="cmProvider" data-i18n-placeholder="settings.providerPlaceholder" placeholder="e.g. siliconflow, openrouter">
+                    </div>
+                    <div class="form-group">
+                        <label data-i18n="settings.baseUrl">API Base URL</label>
+                        <input type="text" id="cmBaseUrl" data-i18n-placeholder="settings.baseUrlPlaceholder" placeholder="https://api.example.com/v1">
+                    </div>
+                    <div class="form-group">
+                        <label data-i18n="settings.apiKey">API Key</label>
+                        <input type="password" id="cmApiKey" data-i18n-placeholder="settings.apiKeyPlaceholder" placeholder="Enter API Key">
+                    </div>
+                    <div class="form-group">
+                        <label data-i18n="settings.modelId">Model ID</label>
+                        <input type="text" id="cmModelId" data-i18n-placeholder="settings.modelIdPlaceholder" placeholder="e.g. deepseek-ai/DeepSeek-V3.2">
+                    </div>
+                    <div class="form-group">
+                        <label data-i18n="settings.modelName">Display Name</label>
+                        <input type="text" id="cmModelName" data-i18n-placeholder="settings.modelNamePlaceholder" placeholder="e.g. DeepSeek-V3.2">
+                    </div>
+                    <div class="form-actions">
+                        <button class="form-btn form-btn-secondary" id="cancelModelBtn" data-i18n="settings.cancel">Cancel</button>
+                        <button class="form-btn form-btn-primary" id="saveModelBtn" data-i18n="settings.saveModel">Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked@11/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/highlight.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/languages/javascript.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/languages/python.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/languages/java.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/languages/cpp.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/languages/typescript.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/languages/xml.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/languages/css.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/languages/sql.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/languages/bash.min.js"></script>
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
