@@ -1269,6 +1269,10 @@ html, body {
     color: var(--text-tertiary);
 }
 
+.modal-tip-mobile {
+    display: none;
+}
+
 /* Utilities */
 .hidden {
     display: none !important;
@@ -1445,6 +1449,14 @@ html, body {
         margin-left: 0;
         margin-top: 8px;
         text-align: center;
+    }
+
+    .modal-tip-desktop {
+        display: none;
+    }
+
+    .modal-tip-mobile {
+        display: inline;
     }
 
     .settings-modal-content {

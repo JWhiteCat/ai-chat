@@ -27,6 +27,7 @@ export const translations = {
         'modal.download': '下载图片',
         'modal.copyImage': '复制图片',
         'modal.tip': '提示: 按 ESC 键或点击背景关闭',
+        'modal.tipMobile': '提示: 点击背景关闭',
 
         'code.copy': '复制',
         'code.copied': '已复制!',
@@ -121,6 +122,7 @@ export const translations = {
         'modal.download': 'Download Image',
         'modal.copyImage': 'Copy Image',
         'modal.tip': 'Tip: Press ESC or click backdrop to close',
+        'modal.tipMobile': 'Tip: Click backdrop to close',
 
         'code.copy': 'Copy',
         'code.copied': 'Copied!',
