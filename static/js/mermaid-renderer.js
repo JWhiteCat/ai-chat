@@ -75,30 +75,25 @@ export class MermaidRenderer {
         actions.className = 'mermaid-actions';
 
         const getSvg = () => wrapper.querySelector('svg');
+        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth <= 768;
 
-        const copyImageBtn = this.createActionButton(t('mermaid.copyImage'), async () => {
-            const svg = getSvg();
-            if (!svg) return;
-            try {
-                const blob = await convertSvgToImage(svg, 3, 'blob');
-                await navigator.clipboard.write([
-                    new ClipboardItem({ 'image/png': blob })
-                ]);
-                showButtonFeedback(copyImageBtn, t('mermaid.copiedImage'), t('mermaid.copyImage'));
-            } catch (e) {
-                console.error('Copy image failed:', e);
-                alert(t('mermaid.copyImageFail'));
-            }
-        });
-
-        const copyCodeBtn = this.createActionButton(t('mermaid.copyCode'), async () => {
-            try {
-                await navigator.clipboard.writeText(code);
-                showButtonFeedback(copyCodeBtn, t('mermaid.copiedCode'), t('mermaid.copyCode'));
-            } catch (e) {
-                console.error('Copy code failed:', e);
-            }
-        });
+        if (!isMobile) {
+            const copyImageBtn = this.createActionButton(t('mermaid.copyImage'), async () => {
+                const svg = getSvg();
+                if (!svg) return;
+                try {
+                    const blob = await convertSvgToImage(svg, 3, 'blob');
+                    await navigator.clipboard.write([
+                        new ClipboardItem({ 'image/png': blob })
+                    ]);
+                    showButtonFeedback(copyImageBtn, t('mermaid.copiedImage'), t('mermaid.copyImage'));
+                } catch (e) {
+                    console.error('Copy image failed:', e);
+                    alert(t('mermaid.copyImageFail'));
+                }
+            });
+            actions.append(copyImageBtn);
+        }
 
         const downloadBtn = this.createActionButton(t('mermaid.downloadImage'), async () => {
             const svg = getSvg();
@@ -120,7 +115,16 @@ export class MermaidRenderer {
             }
         });
 
-        actions.append(copyImageBtn, downloadBtn, copyCodeBtn);
+        const copyCodeBtn = this.createActionButton(t('mermaid.copyCode'), async () => {
+            try {
+                await navigator.clipboard.writeText(code);
+                showButtonFeedback(copyCodeBtn, t('mermaid.copiedCode'), t('mermaid.copyCode'));
+            } catch (e) {
+                console.error('Copy code failed:', e);
+            }
+        });
+
+        actions.append(downloadBtn, copyCodeBtn);
         wrapper.append(actions);
     }
 
