@@ -1211,8 +1211,9 @@ html, body {
     align-items: center;
     justify-content: center;
     padding: 60px 20px 20px;
-    overflow: auto;
+    overflow: hidden;
     min-height: 300px;
+    position: relative;
 }
 
 .image-modal-img {
@@ -1220,14 +1221,11 @@ html, body {
     max-height: calc(95vh - 140px);
     object-fit: contain;
     border-radius: var(--radius-md);
-    cursor: zoom-in;
-    transition: var(--transition);
-}
-
-.image-modal-img.zoomed {
-    cursor: zoom-out;
-    max-width: none;
-    max-height: none;
+    transform-origin: center center;
+    transition: none;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
 }
 
 .image-modal-footer {

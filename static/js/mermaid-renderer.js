@@ -217,6 +217,172 @@ export class MermaidRenderer {
             }
         };
 
-        modalImg.onclick = () => modalImg.classList.toggle('zoomed');
+        if (!this._zoomInitialized) {
+            this.setupZoom(modal, modalImg);
+            this._zoomInitialized = true;
+        } else {
+            // Reset zoom state for new image
+            modalImg.style.transform = '';
+            this._resetZoom?.();
+        }
+    }
+
+    setupZoom(modal, modalImg) {
+        let scale = 1;
+        let translateX = 0;
+        let translateY = 0;
+        const MIN_SCALE = 0.5;
+        const MAX_SCALE = 10;
+
+        const applyTransform = () => {
+            modalImg.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+            modalImg.style.cursor = scale > 1 ? 'grab' : 'default';
+        };
+
+        const resetZoom = () => {
+            scale = 1;
+            translateX = 0;
+            translateY = 0;
+            applyTransform();
+        };
+
+        // Reset on modal open
+        resetZoom();
+        this._resetZoom = resetZoom;
+
+        // Double-click to reset zoom
+        modalImg.ondblclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (scale !== 1) {
+                resetZoom();
+            } else {
+                scale = 2;
+                applyTransform();
+            }
+        };
+
+        // PC: Mouse wheel zoom
+        const modalBody = modal.querySelector('.image-modal-body');
+        modalBody.onwheel = (e) => {
+            e.preventDefault();
+            const rect = modalImg.getBoundingClientRect();
+            const offsetX = e.clientX - rect.left - rect.width / 2;
+            const offsetY = e.clientY - rect.top - rect.height / 2;
+
+            const oldScale = scale;
+            const delta = e.deltaY > 0 ? 0.9 : 1.1;
+            scale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale * delta));
+
+            const ratio = scale / oldScale;
+            translateX -= offsetX * (ratio - 1);
+            translateY -= offsetY * (ratio - 1);
+
+            applyTransform();
+        };
+
+        // PC: Mouse drag to pan
+        let isDragging = false;
+        let dragStartX = 0;
+        let dragStartY = 0;
+
+        modalImg.onmousedown = (e) => {
+            if (scale <= 1) return;
+            e.preventDefault();
+            isDragging = true;
+            dragStartX = e.clientX - translateX;
+            dragStartY = e.clientY - translateY;
+            modalImg.style.cursor = 'grabbing';
+        };
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging || !modal.classList.contains('active')) return;
+            translateX = e.clientX - dragStartX;
+            translateY = e.clientY - dragStartY;
+            applyTransform();
+            modalImg.style.cursor = 'grabbing';
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (!isDragging) return;
+            isDragging = false;
+            modalImg.style.cursor = scale > 1 ? 'grab' : 'default';
+        });
+
+        // Mobile: Pinch-to-zoom and drag
+        let lastTouchDist = 0;
+        let lastTouchX = 0;
+        let lastTouchY = 0;
+        let isTouchDragging = false;
+
+        modalBody.ontouchstart = (e) => {
+            if (e.touches.length === 2) {
+                e.preventDefault();
+                lastTouchDist = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                lastTouchX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+                lastTouchY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+            } else if (e.touches.length === 1 && scale > 1) {
+                isTouchDragging = true;
+                lastTouchX = e.touches[0].clientX - translateX;
+                lastTouchY = e.touches[0].clientY - translateY;
+            }
+        };
+
+        modalBody.ontouchmove = (e) => {
+            if (e.touches.length === 2) {
+                e.preventDefault();
+                const dist = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+                const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+
+                const rect = modalImg.getBoundingClientRect();
+                const offsetX = midX - rect.left - rect.width / 2;
+                const offsetY = midY - rect.top - rect.height / 2;
+
+                const oldScale = scale;
+                scale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale * (dist / lastTouchDist)));
+
+                const ratio = scale / oldScale;
+                translateX -= offsetX * (ratio - 1);
+                translateY -= offsetY * (ratio - 1);
+
+                // Also pan with two fingers
+                translateX += midX - lastTouchX;
+                translateY += midY - lastTouchY;
+
+                lastTouchDist = dist;
+                lastTouchX = midX;
+                lastTouchY = midY;
+                applyTransform();
+            } else if (e.touches.length === 1 && isTouchDragging) {
+                e.preventDefault();
+                translateX = e.touches[0].clientX - lastTouchX;
+                translateY = e.touches[0].clientY - lastTouchY;
+                applyTransform();
+            }
+        };
+
+        modalBody.ontouchend = (e) => {
+            if (e.touches.length < 2) {
+                lastTouchDist = 0;
+            }
+            if (e.touches.length === 0) {
+                isTouchDragging = false;
+            }
+        };
+
+        // Reset zoom when modal closes
+        const observer = new MutationObserver(() => {
+            if (!modal.classList.contains('active')) {
+                resetZoom();
+            }
+        });
+        observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
     }
 }
