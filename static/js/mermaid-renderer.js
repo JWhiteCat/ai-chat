@@ -1,6 +1,23 @@
 import { escapeHtml, convertSvgToImage, showButtonFeedback } from './utils.js';
 import { t } from './i18n.js';
 
+function triggerDownload(url, filename) {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+}
+
+function generateDiagramFilename() {
+    return 'mermaid-diagram-' + Date.now() + '.png';
+}
+
+function isMobileDevice() {
+    return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth <= 768;
+}
+
 export class MermaidRenderer {
     async render(pre, code) {
         if (typeof mermaid === 'undefined') {
@@ -75,9 +92,8 @@ export class MermaidRenderer {
         actions.className = 'mermaid-actions';
 
         const getSvg = () => wrapper.querySelector('svg');
-        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth <= 768;
 
-        if (!isMobile) {
+        if (!isMobileDevice()) {
             const copyImageBtn = this.createActionButton(t('mermaid.copyImage'), async () => {
                 const svg = getSvg();
                 if (!svg) return;
@@ -101,12 +117,7 @@ export class MermaidRenderer {
             try {
                 const blob = await convertSvgToImage(svg, 4, 'blob');
                 const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'mermaid-diagram-' + Date.now() + '.png';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
+                triggerDownload(url, generateDiagramFilename());
                 URL.revokeObjectURL(url);
                 showButtonFeedback(downloadBtn, t('mermaid.downloaded'), t('mermaid.downloadImage'));
             } catch (e) {
@@ -138,40 +149,10 @@ export class MermaidRenderer {
         mermaidDiv.addEventListener('dblclick', () => this.openPreview(wrapper));
     }
 
-    async openPreview(wrapper) {
-        const modal = document.getElementById('imageModal');
-        const modalImg = document.getElementById('imageModalImg');
+    initModalHandlers(modal, modalImg) {
         const modalClose = document.getElementById('imageModalClose');
         const modalDownloadBtn = document.getElementById('modalDownloadBtn');
         const modalCopyBtn = document.getElementById('modalCopyBtn');
-
-        if (!modal || !modalImg) return;
-
-        const svg = wrapper.querySelector('svg');
-        if (!svg) return;
-
-        try {
-            const dataUrl = await convertSvgToImage(svg, 5, 'dataUrl');
-
-            modalImg.src = dataUrl;
-            modal.classList.add('active');
-            document.body.style.overflow = 'hidden';
-
-            modal.dataset.imageUrl = dataUrl;
-            modal.dataset.imageName = 'mermaid-diagram-' + Date.now() + '.png';
-        } catch (e) {
-            console.error('Failed to open preview:', e);
-            alert(t('mermaid.previewFail') + e.message);
-            return;
-        }
-
-        const copyBtnOriginalHtml = `
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-            </svg>
-            ${t('modal.copyImage')}
-        `;
 
         const closePreview = () => {
             modal.classList.remove('active');
@@ -181,24 +162,20 @@ export class MermaidRenderer {
         modalClose.onclick = closePreview;
         modal.querySelector('.image-modal-backdrop').onclick = closePreview;
 
-        const escHandler = (e) => {
-            if (e.key === 'Escape') {
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.classList.contains('active')) {
                 closePreview();
-                document.removeEventListener('keydown', escHandler);
             }
-        };
-        document.addEventListener('keydown', escHandler);
+        });
 
         modalDownloadBtn.onclick = () => {
             const url = modal.dataset.imageUrl;
-            const name = modal.dataset.imageName;
             if (url) {
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = name;
-                a.click();
+                triggerDownload(url, modal.dataset.imageName);
             }
         };
+
+        const copyBtnOriginalHtml = modalCopyBtn.innerHTML;
 
         modalCopyBtn.onclick = async () => {
             const url = modal.dataset.imageUrl;
@@ -217,12 +194,37 @@ export class MermaidRenderer {
             }
         };
 
-        if (!this._zoomInitialized) {
-            this.setupZoom(modal, modalImg);
-            this._zoomInitialized = true;
+        this.setupZoom(modal, modalImg);
+    }
+
+    async openPreview(wrapper) {
+        const modal = document.getElementById('imageModal');
+        const modalImg = document.getElementById('imageModalImg');
+
+        if (!modal || !modalImg) return;
+
+        const svg = wrapper.querySelector('svg');
+        if (!svg) return;
+
+        try {
+            const dataUrl = await convertSvgToImage(svg, 5, 'dataUrl');
+
+            modalImg.src = dataUrl;
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+
+            modal.dataset.imageUrl = dataUrl;
+            modal.dataset.imageName = generateDiagramFilename();
+        } catch (e) {
+            console.error('Failed to open preview:', e);
+            alert(t('mermaid.previewFail') + e.message);
+            return;
+        }
+
+        if (!this._modalInitialized) {
+            this.initModalHandlers(modal, modalImg);
+            this._modalInitialized = true;
         } else {
-            // Reset zoom state for new image
-            modalImg.style.transform = '';
             this._resetZoom?.();
         }
     }
@@ -233,6 +235,8 @@ export class MermaidRenderer {
         let translateY = 0;
         const MIN_SCALE = 0.5;
         const MAX_SCALE = 10;
+
+        const clampScale = (value) => Math.min(MAX_SCALE, Math.max(MIN_SCALE, value));
 
         const applyTransform = () => {
             modalImg.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
@@ -246,11 +250,22 @@ export class MermaidRenderer {
             applyTransform();
         };
 
-        // Reset on modal open
         resetZoom();
         this._resetZoom = resetZoom;
 
-        // Double-click to reset zoom
+        const zoomAtPoint = (offsetX, offsetY, newScale) => {
+            const oldScale = scale;
+            scale = clampScale(newScale);
+            const ratio = scale / oldScale;
+            translateX -= offsetX * (ratio - 1);
+            translateY -= offsetY * (ratio - 1);
+        };
+
+        const getImageCenter = () => {
+            const rect = modalImg.getBoundingClientRect();
+            return { cx: rect.left + rect.width / 2, cy: rect.top + rect.height / 2 };
+        };
+
         modalImg.ondblclick = (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -262,26 +277,16 @@ export class MermaidRenderer {
             }
         };
 
-        // PC: Mouse wheel zoom
         const modalBody = modal.querySelector('.image-modal-body');
+
         modalBody.onwheel = (e) => {
             e.preventDefault();
-            const rect = modalImg.getBoundingClientRect();
-            const offsetX = e.clientX - rect.left - rect.width / 2;
-            const offsetY = e.clientY - rect.top - rect.height / 2;
-
-            const oldScale = scale;
+            const { cx, cy } = getImageCenter();
             const delta = e.deltaY > 0 ? 0.9 : 1.1;
-            scale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale * delta));
-
-            const ratio = scale / oldScale;
-            translateX -= offsetX * (ratio - 1);
-            translateY -= offsetY * (ratio - 1);
-
+            zoomAtPoint(e.clientX - cx, e.clientY - cy, scale * delta);
             applyTransform();
         };
 
-        // PC: Mouse drag to pan
         let isDragging = false;
         let dragStartX = 0;
         let dragStartY = 0;
@@ -300,16 +305,14 @@ export class MermaidRenderer {
             translateX = e.clientX - dragStartX;
             translateY = e.clientY - dragStartY;
             applyTransform();
-            modalImg.style.cursor = 'grabbing';
         });
 
         document.addEventListener('mouseup', () => {
             if (!isDragging) return;
             isDragging = false;
-            modalImg.style.cursor = scale > 1 ? 'grab' : 'default';
+            applyTransform();
         });
 
-        // Mobile: Pinch-to-zoom and drag
         let lastTouchDist = 0;
         let lastTouchX = 0;
         let lastTouchY = 0;
@@ -341,18 +344,9 @@ export class MermaidRenderer {
                 const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
                 const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
 
-                const rect = modalImg.getBoundingClientRect();
-                const offsetX = midX - rect.left - rect.width / 2;
-                const offsetY = midY - rect.top - rect.height / 2;
+                const { cx, cy } = getImageCenter();
+                zoomAtPoint(midX - cx, midY - cy, scale * (dist / lastTouchDist));
 
-                const oldScale = scale;
-                scale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale * (dist / lastTouchDist)));
-
-                const ratio = scale / oldScale;
-                translateX -= offsetX * (ratio - 1);
-                translateY -= offsetY * (ratio - 1);
-
-                // Also pan with two fingers
                 translateX += midX - lastTouchX;
                 translateY += midY - lastTouchY;
 
@@ -377,7 +371,6 @@ export class MermaidRenderer {
             }
         };
 
-        // Reset zoom when modal closes
         const observer = new MutationObserver(() => {
             if (!modal.classList.contains('active')) {
                 resetZoom();

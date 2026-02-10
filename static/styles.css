@@ -1221,7 +1221,7 @@ html, body {
     max-height: calc(95vh - 140px);
     object-fit: contain;
     border-radius: var(--radius-md);
-    transform-origin: center center;
+    transform-origin: center;
     transition: none;
     user-select: none;
     -webkit-user-select: none;
