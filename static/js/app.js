@@ -23,10 +23,10 @@ class ChatApp {
     }
 
     async init() {
-        await this.configManager.load();
         this.uiManager.init();
         applyToDOM();
         this.setupEventListeners();
+        await this.configManager.load();
     }
 
     setupEventListeners() {
