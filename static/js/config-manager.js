@@ -13,7 +13,8 @@ export class ConfigManager {
             apiKey: '',
             baseUrl: '',
             model: 'claude-sonnet-4-5-20250929',
-            webSearchEnabled: false
+            webSearchEnabled: false,
+            temperature: 1.0
         };
         this.serverConfig = null;
         this.devMode = loadDevMode();
@@ -43,6 +44,9 @@ export class ConfigManager {
             }
             if (savedConfig.webSearchEnabled !== undefined) {
                 this.config.webSearchEnabled = savedConfig.webSearchEnabled;
+            }
+            if (savedConfig.temperature !== undefined) {
+                this.config.temperature = savedConfig.temperature;
             }
         }
 
@@ -134,6 +138,13 @@ export class ConfigManager {
             modelSelector.value = this.config.model;
         }
 
+        const temperatureSlider = document.getElementById('temperatureSlider');
+        const temperatureValue = document.getElementById('temperatureValue');
+        if (temperatureSlider && temperatureValue) {
+            temperatureSlider.value = this.config.temperature;
+            temperatureValue.textContent = this.config.temperature.toFixed(1);
+        }
+
         const devModeToggle = document.getElementById('devModeToggle');
         if (devModeToggle) {
             devModeToggle.checked = this.devMode;
@@ -153,6 +164,11 @@ export class ConfigManager {
         this.config.webSearchEnabled = enabled;
         this.save();
         console.log(`Web search ${enabled ? 'enabled' : 'disabled'}`);
+    }
+
+    updateTemperature(temperature) {
+        this.config.temperature = parseFloat(temperature);
+        this.save();
     }
 
     useProxy() {

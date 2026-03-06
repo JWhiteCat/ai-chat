@@ -74,6 +74,12 @@ class ChatApp {
             this.configManager.toggleWebSearch(e.target.checked);
         });
 
+        document.getElementById('temperatureSlider').addEventListener('input', (e) => {
+            const value = parseFloat(e.target.value);
+            document.getElementById('temperatureValue').textContent = value.toFixed(1);
+            this.configManager.updateTemperature(value);
+        });
+
         document.getElementById('devModeToggle').addEventListener('change', (e) => {
             this.configManager.toggleDevMode(e.target.checked);
         });

@@ -72,6 +72,8 @@ export const translations = {
         'settings.themeDesc': '选择界面主题',
         'settings.themeLight': '浅色',
         'settings.themeDark': '深色',
+        'settings.temperature': '温度',
+        'settings.temperatureDesc': '控制随机性 (0-2, 默认 1.0)',
 
         'settings.customModels': '自定义模型',
         'settings.customModelsDesc': '添加 OpenAI 兼容的第三方模型',
@@ -167,6 +169,8 @@ export const translations = {
         'settings.themeDesc': 'Choose interface theme',
         'settings.themeLight': 'Light',
         'settings.themeDark': 'Dark',
+        'settings.temperature': 'Temperature',
+        'settings.temperatureDesc': 'Control randomness (0-2, default 1.0)',
 
         'settings.customModels': 'Custom Models',
         'settings.customModelsDesc': 'Add OpenAI-compatible third-party models',

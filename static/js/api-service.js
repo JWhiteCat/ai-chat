@@ -22,7 +22,7 @@ export class APIService {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${customModel.api_key}`
                 },
-                body: { model: customModel.model.id, messages, stream: true },
+                body: { model: customModel.model.id, messages, stream: true, temperature: config.temperature },
                 parseChunk: this._parseOpenAIChunk
             }, onChunk, onComplete);
         }
@@ -40,7 +40,8 @@ export class APIService {
             model: config.model,
             max_tokens: 64000,
             messages,
-            stream: true
+            stream: true,
+            temperature: config.temperature
         };
         if (config.webSearchEnabled) {
             body.tools = [{ type: "web_search_20250305", max_uses: 5 }];
